@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swipe Profiles</title>
+</head>
+<body>
+    <h1>Swipe Profiles</h1>
+    <form action="/swipe" method="POST">
+        <h2>Select Filters</h2>
+        {% for skill in skills %}
+            <div>
+                <input type="checkbox" id="skill{{ skill[0] }}" name="skills" value="{{ skill[0] }}">
+                <label for="skill{{ skill[0] }}">{{ skill[1] }}</label>
+            </div>
+        {% endfor %}
+        <button type="submit">Apply Filters</button>
+    </form>
+    {% if user %}
+        <h2>Potential User</h2>
+        <p>Username: {{ user[1] }}</p>
+        <form action="/swipe_action" method="POST">
+            <input type="hidden" name="user_id" value="{{ user[0] }}">
+            <button type="submit" name="action" value="like">Like</button>
+            <button type="submit" name="action" value="dislike">Dislike</button>
+        </form>
+    {% else %}
+        <p>No more users to display.</p>
+    {% endif %}
+</body>
+</html>
