@@ -1,3 +1,5 @@
+--NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
+
 -- Drop tables if they exist
 DROP TABLE IF EXISTS Matches;
 DROP TABLE IF EXISTS UserSwipes;
