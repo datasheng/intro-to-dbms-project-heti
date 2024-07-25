@@ -1,6 +1,6 @@
---NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
+-- NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
 
--- Drop tables if they exist (doesnt have all tables)
+--  Drop tables if they exist (doesnt have all tables)
 DROP TABLE IF EXISTS Matches;
 DROP TABLE IF EXISTS UserSwipes;
 DROP TABLE IF EXISTS UserSkills;
@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS Skills;
 DROP TABLE IF EXISTS Users;
 DROP TABLE IF EXISTS PotentialUsers;
 
--- Create Users table
+--  Create Users table
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
@@ -25,14 +25,14 @@ CREATE TABLE RECRUITEE(
     BIO TEXT,
     resume_link TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-)
+);
 
 
--- Create Skills table
+--  Create Skills table
 CREATE TABLE Skills (
     skill_id INT AUTO_INCREMENT PRIMARY KEY,
     skill_name VARCHAR(100) NOT NULL,
-    -- Skill_description TEXT, (Put skill description here or in recrutee_skills? I say skills, but you will have to update the middle)
+    --  Skill_description TEXT, (Put skill description here or in recrutee_skills? I say skills, but you will have to update the middle)
 );
 
 CREATE TABLE RECRUTEE_SKILLS(
@@ -41,7 +41,7 @@ CREATE TABLE RECRUTEE_SKILLS(
     skill_id INT,
     FOREIGN KEY (recruitee_id) REFERENCES RECRUITEE(recruitee_id),
     FOREIGN KEY (skill_id) REFERENCES Skills(skill_id)
-)
+);
 
 CREATE TABLE JOBS(
     job_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -52,13 +52,13 @@ CREATE TABLE JOBS(
     job_location TEXT,
     job_post_time DATE,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
-)
+);
 
--- Create Skills table
+--  Create Skills table
 CREATE TABLE TAGS (
     tag_id INT AUTO_INCREMENT PRIMARY KEY,
     tag_name VARCHAR(100) NOT NULL,
-    -- tag_description TEXT, (same problem as Skill_description)
+    --  tag_description TEXT, (same problem as Skill_description)
 );
 
 CREATE TABLE JOB_TAGS(
@@ -67,11 +67,11 @@ CREATE TABLE JOB_TAGS(
     job_id INT,
     FOREIGN KEY (tag_id) REFERENCES TAGS(tag_id),
     FOREIGN KEY (job_id) REFERENCES JOBS(job_id)
-)
+);
 
 
--- Create UserSkills table
--- OLD TABLE SOULDNT USE
+--  Create UserSkills table
+--  OLD TABLE SOULDNT USE
 CREATE TABLE UserSkills (
     user_skill_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -83,7 +83,7 @@ CREATE TABLE UserSkills (
 
 INSERT INTO Skills (skill_name) VALUES ('C#'), ('Python'), ('MySQL');
 
---create locaiton table
+-- create locaiton table
 
 CREATE TABLE LOCATION(
     location_id int AUTO_INCREMENT PRIMARY KEY,
@@ -93,12 +93,12 @@ CREATE TABLE LOCATION(
     FOREIGN KEY (job_id) REFERENCES JOBS(job_id),
     country text,
     postal_code int,
-    adress text, --may need some tweaking for location, can prob just use the postal code however
-)
+    adress text -- may need some tweaking for location, can prob just use the postal code for filtering however
+);
 
--- Userswipe is deleted, should be in original file which is uplaoded on the git
+--  Userswipe is deleted, should be in original file which is uplaoded on the git
 
--- Recruit Swipping
+--  Recruit Swipping
 CREATE TABLE RECRUITSWIPE (
     apply_id INT AUTO_INCREMENT PRIMARY KEY,
     recruitee_swipe_id INT,
@@ -108,7 +108,7 @@ CREATE TABLE RECRUITSWIPE (
     FOREIGN KEY (job_recive_id) REFERENCES JOBS(job_id)
 );
 
--- Job swipping
+--  Job swipping
 CREATE TABLE JOBSWIPE (
     accept_id INT AUTO_INCREMENT PRIMARY KEY,
     job_swipe_id INT,
@@ -118,8 +118,8 @@ CREATE TABLE JOBSWIPE (
     FOREIGN KEY (job_swipe_id) REFERENCES JOBS(job_id)
 );
 
--- TODO: adapt table for tag search system, may not need this table if you update skills/tags for better filtering
--- Create PotentialUsers table 
+--  TODO: adapt table for tag search system, may not need this table if you update skills/tags for better filtering
+--  Create PotentialUsers table 
 CREATE TABLE PotentialUsers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -128,7 +128,7 @@ CREATE TABLE PotentialUsers (
     FOREIGN KEY (filterer_id) REFERENCES Users(user_id)
 );
 
--- Create Matches table
+--  Create Matches table
 CREATE TABLE Matches (
     match_id INT AUTO_INCREMENT PRIMARY KEY,
     recruited_id INT,
@@ -137,7 +137,7 @@ CREATE TABLE Matches (
     FOREIGN KEY (interviewing_id) REFERENCES JobSwipe(accept_id)
 );
 
--- temp message table
+--  temp message table
 
 CREATE TABLE MESSAGES(
     message_id int AUTO_INCREMENT PRIMARY KEY,
@@ -145,20 +145,20 @@ CREATE TABLE MESSAGES(
     FOREIGN KEY (match_id) REFERENCES Matches(match_id),
     sender_id int,
     reciver_id int,
-    content TEXT, --Might wanna be a binary file to be able to send images or videos
+    content TEXT, -- Might wanna be a binary file to be able to send images or videos
     sent_at TIMESTAMP
-)
+);
 
 
--- TODO: Update trigger and have alternatives for recrutee to job and vice versa
--- Create Trigger
+--  TODO: Update trigger and have alternatives for recrutee to job and vice versa
+--  Create Trigger
 DELIMITER //
 
 CREATE TRIGGER check_match AFTER INSERT ON UserSwipes
 FOR EACH ROW
 BEGIN
+    DECLARE match_exists INT;
     IF NEW.swipe_type = 'like' THEN
-        DECLARE match_exists INT;
         SELECT COUNT(*) INTO match_exists
         FROM UserSwipes
         WHERE swiper_id = NEW.swipee_id
@@ -173,21 +173,21 @@ END //
 
 DELIMITER ;
 
--- TODO: I made garbage, please fix
--- 1. Add Check if recruit swipe or JobSWipe (i put them as seperate triggers)
--- 2. make different code for swiper and swipee so that it works with new variable names
--- 3. insert into matches should take recrutee and jobs ids, not users.
---      *values sjould be consistent to the matches table
--- The original trigger is above to show what i have changed
--- recive = swipee
--- swipe = swiper (prob should change this in table)
+--  TODO: I made garbage, please fix
+--  1. Add Check if recruit swipe or JobSWipe (i put them as seperate triggers)
+--  2. make different code for swiper and swipee so that it works with new variable names
+--  3. insert into matches should take recrutee and jobs ids, not users.
+--       *values sjould be consistent to the matches table
+--  The original trigger is above to show what i have changed
+--  recive = swipee
+--  swipe = swiper (prob should change this in table)
 DELIMITER //
 
 CREATE TRIGGER rec_check_match AFTER INSERT ON RECRUITSWIPE
 FOR EACH ROW
 BEGIN
+    DECLARE match_exists INT;
     IF NEW.swipe_type = 'like' THEN
-        DECLARE match_exists INT;
         SELECT COUNT(*) INTO match_exists
         FROM JOBSWIPE
         WHERE job_swipe_id  = NEW.job_recive_id 
@@ -207,8 +207,8 @@ DELIMITER //
 CREATE TRIGGER job_check_match AFTER INSERT ON JOBSWIPE
 FOR EACH ROW
 BEGIN
+    DECLARE match_exists INT;
     IF NEW.swipe_type = 'like' THEN
-        DECLARE match_exists INT;
         SELECT COUNT(*) INTO match_exists
         FROM RECRUITSWIPE
         WHERE NEW.job_swipe_id  = job_recive_id 
