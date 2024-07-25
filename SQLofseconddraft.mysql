@@ -1,4 +1,4 @@
---NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
+-- NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
 
 -- Drop tables if they exist
 DROP TABLE IF EXISTS Matches;
@@ -15,7 +15,8 @@ CREATE TABLE Users (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
-    password VARCHAR(255) NOT NULL
+    password VARCHAR(255) NOT NULL,
+    userType ENUM('Recruiter', 'Recruitee') -- may not be used, just for debugging probably
 );
 
 CREATE TABLE RECRUITEE(
@@ -24,6 +25,17 @@ CREATE TABLE RECRUITEE(
     BIO TEXT,
     resume_link TEXT,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
+)
+
+CREATE TABLE LOCATION(
+    location_id int AUTO_INCREMENT PRIMARY KEY,
+    recruitee_id int,
+    job_id int,
+    FOREIGN KEY (recruitee_id) REFERENCES RECRUITEE(recruitee_id),
+    FOREIGN KEY (job_id) REFERENCES JOBS(job_id),
+    country text,
+    postal_code int,
+    adress text, --may need some tweaking for location, can prob just use the postal code however
 )
 
 -- Create Skills table
