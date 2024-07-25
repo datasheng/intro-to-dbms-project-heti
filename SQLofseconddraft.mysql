@@ -1,0 +1,154 @@
+--NOTE: only users are implemented, no jobs listing have been made (maybe have a tag variable in user to determine if recruiter or applicant)
+
+-- Drop tables if they exist
+DROP TABLE IF EXISTS Matches;
+DROP TABLE IF EXISTS UserSwipes;
+DROP TABLE IF EXISTS UserSkills;
+DROP TABLE IF EXISTS Skills;
+DROP TABLE IF EXISTS Users;
+DROP TABLE IF EXISTS PotentialUsers;
+
+-- Create Users table
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE RECRUITEE(
+    recruitee_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    BIO TEXT,
+    resume_link TEXT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+)
+
+-- Create Skills table
+CREATE TABLE Skills (
+    skill_id INT AUTO_INCREMENT PRIMARY KEY,
+    skill_name VARCHAR(100) NOT NULL,
+    -- Skill_description TEXT, (Put skill description here or in recrutee_skills? I say skills, but you will have to update the middle)
+);
+
+CREATE TABLE RECRUTEE_SKILLS(
+    user_skill_id INT AUTO_INCREMENT PRIMARY KEY,
+    recruitee_id int,
+    skill_id INT,
+    FOREIGN KEY (recruitee_id) REFERENCES RECRUITEE(recruitee_id),
+    FOREIGN KEY (skill_id) REFERENCES Skills(skill_id)
+)
+
+CREATE TABLE JOBS(
+    job_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    job_title TINYTEXT, 
+    job_description TEXT,
+    compensation TINYTEXT,
+    job_location TEXT,
+    job_post_time DATE,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+)
+
+-- Create Skills table
+CREATE TABLE TAGS (
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    tag_name VARCHAR(100) NOT NULL,
+    -- tag_description TEXT, (same as skills)
+);
+
+CREATE TABLE JOB_TAGS(
+    job_tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    tag_id int,
+    job_id INT,
+    FOREIGN KEY (tag_id) REFERENCES TAGS(tag_id),
+    FOREIGN KEY (job_id) REFERENCES JOBS(job_id)
+)
+
+
+-- Create UserSkills table
+'
+CREATE TABLE UserSkills (
+    user_skill_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    skill_id INT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (skill_id) REFERENCES Skills(skill_id)
+);
+'
+INSERT INTO Skills (skill_name) VALUES ('C#'), ('Python'), ('MySQL');
+-- Create UserSwipes table
+CREATE TABLE RecruitSwipe (
+    apply_id INT AUTO_INCREMENT PRIMARY KEY,
+    recruitee_swipe_id INT,
+    job_recive_id INT,
+    swipe_type ENUM('like', 'dislike'),
+    FOREIGN KEY (recruitee_swipe_id) REFERENCES RECRUITEE(recruitee_id),
+    FOREIGN KEY (job_recive_id) REFERENCES JOBS(job_id)
+);
+
+CREATE TABLE JobSwipe (
+    accept_id INT AUTO_INCREMENT PRIMARY KEY,
+    job_swipe_id INT,
+    recruitee_recive_id INT,
+    swipe_type ENUM('like', 'dislike'),
+    FOREIGN KEY (recruitee_recive_id) REFERENCES RECRUITEE(recruitee_id),
+    FOREIGN KEY (job_swipe_id) REFERENCES JOBS(job_id)
+);
+
+-- TODO: adapt table for tag search system, may not need this table if you update skills/tags for better filtering
+-- Create PotentialUsers table 
+CREATE TABLE PotentialUsers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    filterer_id INT,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (filterer_id) REFERENCES Users(user_id)
+);
+
+-- Create Matches table
+CREATE TABLE Matches (
+    match_id INT AUTO_INCREMENT PRIMARY KEY,
+    recruited_id INT,
+    interviewing_id INT,
+    FOREIGN KEY (recruited_id) REFERENCES RecruitSwipe(apply_id),
+    FOREIGN KEY (interviewing_id) REFERENCES JobSwipe(accept_id)
+);
+
+CREATE TABLE MESSAGES(
+    message_id int AUTO_INCREMENT PRIMARY KEY,
+    match_id int,
+    FOREIGN KEY (match_id) REFERENCES Matches(match_id),
+    sender_id int,
+    reciver_id int,
+    content TEXT, --Might wanna be a binary file to be able to send images or videos
+    sent_at TIMESTAMP
+)
+
+
+-- TODO: Update trigger and have alternatives for recrutee to job and vice versa
+-- Create Trigger
+DELIMITER //
+
+CREATE TRIGGER check_match AFTER INSERT ON UserSwipes
+FOR EACH ROW
+BEGIN
+    IF NEW.swipe_type = 'like' THEN
+        DECLARE match_exists INT;
+        SELECT COUNT(*) INTO match_exists
+        FROM UserSwipes
+        WHERE swiper_id = NEW.swipee_id
+        AND swipee_id = NEW.swiper_id
+        AND swipe_type = 'like';
+
+        IF match_exists > 0 THEN
+            INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(NEW.swiper_id, NEW.swipee_id), GREATEST(NEW.swiper_id, NEW.swipee_id));
+        END IF;
+    END IF;
+END //
+
+DELIMITER ;
+
+SELECT * FROM UserSwipes;
