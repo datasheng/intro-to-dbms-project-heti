@@ -16,7 +16,7 @@ CREATE TABLE Users (
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    userType ENUM('Recruiter', 'Recruitee')
+    userType ENUM('Recruiter_Normal', 'Recruitee_Normal','Recruiter_Premium', 'Recruitee_Premium')
 );
 
 CREATE TABLE RECRUITEE(
@@ -84,7 +84,7 @@ CREATE TABLE UserSkills (
 INSERT INTO Skills (skill_name) VALUES ('C#'), ('Python'), ('MySQL');
 
 -- create locaiton table
-
+'
 CREATE TABLE LOCATION(
     location_id int AUTO_INCREMENT PRIMARY KEY,
     recruitee_id int,
@@ -95,7 +95,7 @@ CREATE TABLE LOCATION(
     postal_code int,
     adress text -- may need some tweaking for location, can prob just use the postal code for filtering however
 );
-
+'
 --  Userswipe is deleted, should be in original file which is uplaoded on the git
 
 --  Recruit Swipping
