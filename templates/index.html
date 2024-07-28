@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linker - Job Search App</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Card.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/SwipeButton.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('{{ url_for('static', filename='images/background.png') }}'); /* Use Flask url_for to ensure correct path */
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding-top: 60px; /* Adjust for the navbar */
+            text-align: center; /* Center-align the text */
+            font-family: 'Roboto', sans-serif; /* Use Roboto font */
+            color: #333; /* Dark color for better contrast */
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 0;
+            z-index: 1000;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar a {
+            color: #333;
+            font-weight: 500;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .content h1 {
+            font-size: 64px;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: inline-block;
+            color: red; /* Red color for the header */
+        }
+
+        .content p {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #666; /* Lighter color for better contrast against the background */
+        }
+
+        .swipeContainer {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .cardContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            position: relative;
+            width: 300px;
+            height: 300px; /* Adjusted for better layout */
+            padding: 20px;
+            border-radius: 20px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
+            margin: auto;
+            border: 1px solid #ccc;
+            background-image: url('{{ url_for('static', filename='images/logo.png') }}'); /* Use Flask url_for to ensure correct path */
+        }
+
+        .swipeButtons {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .swipeButtons a {
+            background-color: #007bff;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .swipeButtons a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="content">
+        <h1>Linker.</h1>
+        <p>Find Talent. Get Hired. Fast.</p>
+        <div class="swipeContainer">
+            <div class="cardContainer">
+                <div class="card"></div>
+            </div>
+            <div class="swipeButtons">
+                <a href="{{ url_for('register') }}">Get Started</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

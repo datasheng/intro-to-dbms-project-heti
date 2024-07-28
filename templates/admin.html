@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding-top: 60px; /* Adjust for the navbar */
+            text-align: center; /* Center-align the text */
+            font-family: 'Roboto', sans-serif; /* Use Roboto font */
+            color: #333; /* Dark color for better contrast */
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: red;
+        }
+
+        p {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <p>Premium Users: {{ premium_user_count }}</p>
+        <p>Total Revenue: ${{ total_revenue }}</p>
+        <p>Subscription Cost: ${{ sub_cost }}</p>
+    </div>
+</body>
+</html>

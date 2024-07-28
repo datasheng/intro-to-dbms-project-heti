@@ -3,24 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recruiter Profile</title>
+    <title>Recruiter Profile - Linker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('{{ url_for('static', filename='images/background.png') }}');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding-top: 60px; 
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: red;
+            text-align: center;
+        }
+
+        label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 85%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Recruiter Profile</h1>
-    <form action="/recruiter_profile" method="POST">
-        <label for="job_title">Job Title:</label>
-        <input type="text" id="job_title" name="job_title" required><br>
-        <label for="job_description">Job Description:</label>
-        <textarea id="job_description" name="job_description" required></textarea><br>
-        <label for="compensation">Compensation:</label>
-        <input type="number" id="compensation" name="compensation" required><br>
-        <label for="job_location">Job Location:</label>
-        <select id="job_location" name="job_location" required>
-            {% for location in locations %}
-                <option value="{{ location[0] }}">{{ location[1] }}</option>
-            {% endfor %}
-        </select><br>
-        <button type="submit">Post Job</button>
-    </form>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>New Job Listing</h1>
+        <form method="post">
+            <label for="job_title">Job Title</label>
+            <input type="text" id="job_title" name="job_title" required>
+
+            <label for="job_description">Job Description</label>
+            <input type="text" id="job_description" name="job_description" required>
+
+            <label for="compensation">Compensation</label>
+            <input type="number" id="compensation" name="compensation" required>
+
+            <label for="job_location">Job Location</label>
+            <select id="job_location" name="job_location" required>
+                {% for location in locations %}
+                    <option value="{{ location[0] }}">{{ location[1] }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Save Job Listing</button>
+        </form>
+    </div>
 </body>
 </html>

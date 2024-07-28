@@ -7,27 +7,38 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Card.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/SwipeButton.css') }}">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
         body {
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f5f5f5;
+            background-image: url('{{ url_for('static', filename='images/background.png') }}');
+            background-size: cover;
+            background-position: center;
             margin: 0;
+            padding-top: 60px; /* Adjust for the navbar */
+            font-family: 'Roboto', sans-serif;
         }
 
         h1 {
             margin-top: 20px;
             font-size: 24px;
             text-align: center;
+            color: white;
         }
 
         .filters {
             position: absolute;
-            top: 20px;
+            top: 80px; /* Adjust for the navbar */
             left: 20px;
             text-align: left;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.1);
         }
 
         .filters form {
@@ -37,6 +48,17 @@
 
         .filters button {
             margin-top: 10px;
+        }
+
+        .swipes-container {
+            position: absolute;
+            top: 80px;
+            left: 240px;
+            width: 150px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.1);
         }
 
         .swipeContainer {
@@ -68,7 +90,7 @@
             box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
             margin: auto;
             border: 1px solid #ccc;
-            background-image: url('/static/images/default_job.png'); /* Ensure this path is correct */
+            background-image: url('/static/images/default_user.png'); /* Ensure this path is correct */
         }
 
         .card > h3, .card > p, .card > ul {
@@ -117,7 +139,7 @@
 
         .links {
             position: absolute;
-            top: 20px;
+            top: 80px; /* Adjust for the navbar */
             right: 20px;
             display: flex;
             flex-direction: column;
@@ -130,58 +152,64 @@
     </style>
 </head>
 <body>
+    {% include 'navbar.html' %}
     <h1>Swipe Jobs - Recruitee</h1>
     <div class="filters">
-        <p>Remaining Swipes: {{ remaining_swipes }}</p>
-        <form action="/upgrade_premium" method="POST">
-            <button type="submit">Upgrade to Premium</button>
-        </form>
-        <form action="/swipe_recruitee" method="POST">
-            <h2>Select Filters</h2>
-            <div>
-                <label for="min_compensation">Minimum Compensation:</label>
-                <input type="number" id="min_compensation" name="min_compensation">
+        <h3>Filters</h3>
+        <form method="post">
+            <label for="acceptable_cities">Acceptable Cities</label>
+            <div class="locations-container">
+                {% for location in locations %}
+                    <div class="location">
+                        <input type="checkbox" id="location_{{ location[0] }}" name="acceptable_cities" value="{{ location[0] }}">
+                        <label for="location_{{ location[0] }}">{{ location[1] }}</label>
+                    </div>
+                {% endfor %}
             </div>
-            <h3>Acceptable Cities</h3>
-            {% for location in locations %}
-                <div>
-                    <input type="checkbox" id="location{{ location[0] }}" name="acceptable_cities" value="{{ location[0] }}">
-                    <label for="location{{ location[0] }}">{{ location[1] }}</label>
-                </div>
-            {% endfor %}
+
+            <label for="min_compensation">Min Compensation</label>
+            <input type="number" id="min_compensation" name="min_compensation">
+
             <button type="submit">Apply Filters</button>
         </form>
     </div>
+    
+    <div class="swipes-container">
+        <h3>Remaining Swipes</h3>
+        <p>{{ remaining_swipes }}</p>
+    </div>
+
     <div class="links">
         <a href="{{ url_for('matches') }}">See Matches</a>
-        <a href="{{ url_for('recruitee_profile') }}">Update Profile</a>
+        <a href="{{ url_for('recruitee_profile') }}">Edit Profile</a>
     </div>
+
     <div class="swipeContainer">
         {% if job %}
             <div class="cardContainer">
                 <div class="card">
                     <h3>{{ job[1] }}</h3>
-                    <p><strong>Description:</strong> {{ job[2] }}</p>
+                    <p><strong>Job Description:</strong> {{ job[2] }}</p>
                     <p><strong>Compensation:</strong> {{ job[3] }}</p>
                     <p><strong>Location:</strong> {{ job[4] }}</p>
                 </div>
             </div>
             <div class="swipeButtons">
-                <button class="swipeButton_like" onclick="handleSwipe('like', {{ job[0] }})">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#4caf50">
-                        <path d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z"/>
-                    </svg>
-                </button>
                 <button class="swipeButton_dislike" onclick="handleSwipe('dislike', {{ job[0] }})">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#f44336">
                         <path d="M0 0h24v24H0z" fill="none"/>
                         <path d="M19 13H5v-2h14v2z"/>
                     </svg>
                 </button>
+                <button class="swipeButton_like" onclick="handleSwipe('like', {{ job[0] }})">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#4caf50">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z"/>
+                    </svg>
+                </button>
             </div>
         {% else %}
-            <p>No more jobs to display.</p>
+            <p>No more jobs available based on your filters.</p>
         {% endif %}
     </div>
     <script>

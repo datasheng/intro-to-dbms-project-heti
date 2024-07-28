@@ -20,7 +20,7 @@ current_user_id = None
 
 @app.route('/')
 def index():
-    return "Welcome to the Job Search App!"
+    return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -85,12 +85,18 @@ def recruitee_profile():
     if current_user_id is None:
         return redirect(url_for('login'))
 
+    cur = mysql.connection.cursor()
     if request.method == 'POST':
         bio = request.form['bio']
         selected_skills = request.form.getlist('skills')
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO Recruitee (user_id, bio) VALUES (%s, %s)", (current_user_id, bio))
-
+        
+        # Update bio
+        cur.execute("UPDATE Recruitee SET bio = %s WHERE user_id = %s", (bio, current_user_id))
+        
+        # Clear current skills
+        cur.execute("DELETE FROM UserSkills WHERE user_id = %s", [current_user_id])
+        
+        # Insert new skills
         for skill_id in selected_skills:
             cur.execute("INSERT INTO UserSkills (user_id, skill_id) VALUES (%s, %s)", (current_user_id, skill_id))
         
@@ -98,11 +104,21 @@ def recruitee_profile():
         cur.close()
         return redirect(url_for('swipe_recruitee'))
     else:
-        cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM Skills")
+        # Fetch current bio
+        cur.execute("SELECT bio FROM Recruitee WHERE user_id = %s", [current_user_id])
+        bio = cur.fetchone()[0]
+        
+        # Fetch all skills and mark the ones the user already has
+        cur.execute("""
+            SELECT s.skill_id, s.skill_name, 
+            CASE WHEN us.user_id IS NOT NULL THEN 1 ELSE 0 END AS has_skill
+            FROM Skills s
+            LEFT JOIN UserSkills us ON s.skill_id = us.skill_id AND us.user_id = %s
+        """, [current_user_id])
         skills = cur.fetchall()
         cur.close()
-        return render_template('recruitee_profile.html', skills=skills)
+        return render_template('recruitee_profile.html', bio=bio, skills=skills)
+
 
 def get_remaining_swipes(user_id):
     cur = mysql.connection.cursor()
@@ -321,19 +337,19 @@ def upgrade_premium():
         return redirect(url_for('login'))
 
     cur = mysql.connection.cursor()
-    # Update the user_type to premium
     cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [current_user_id])
-    current_user_type = cur.fetchone()[0]
+    user_type = cur.fetchone()[0]
 
-    if 'recruiter' in current_user_type:
+    if user_type == 'recruiter':
         new_user_type = 'recruiter_premium'
-    else:
+    elif user_type == 'recruitee':
         new_user_type = 'recruitee_premium'
-    
+    else:
+        new_user_type = user_type
+
     cur.execute("UPDATE Users SET user_type = %s WHERE user_id = %s", (new_user_type, current_user_id))
     mysql.connection.commit()
     cur.close()
-
     return redirect(url_for('index'))
 @app.route('/enter_chat', methods=['POST'])
 def enter_chat():
@@ -344,7 +360,37 @@ def enter_chat():
     match_id = request.form['match_id']
     session['chat_with_user_id'] = match_id
     return redirect(url_for('chat'))
+@app.context_processor
+def inject_user():
+    global current_user_id
+    if current_user_id is None:
+        return dict(user_type=None, is_premium=False)
 
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [current_user_id])
+    user_type = cur.fetchone()[0]
+    is_premium = user_type in ['recruiter_premium', 'recruitee_premium']
+    cur.close()
+    return dict(user_type=user_type, is_premium=is_premium)
+
+
+@app.route('/logout')
+def logout():
+    global current_user_id
+    current_user_id = None
+    return redirect(url_for('login'))
+@app.route('/admin')
+def admin():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT COUNT(*) FROM Users 
+        WHERE user_type = 'recruiter_premium' OR user_type = 'recruitee_premium'
+    """)
+    premium_user_count = cur.fetchone()[0]
+    sub_cost = 100
+    total_revenue = premium_user_count * sub_cost
+    cur.close()
+    return render_template('admin.html', premium_user_count=premium_user_count, total_revenue=total_revenue, sub_cost=sub_cost)
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
     global current_user_id

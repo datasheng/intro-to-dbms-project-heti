@@ -1,24 +1,94 @@
-<!-- register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
+    <title>Register - Linker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('{{ url_for('static', filename='images/background.png') }}'); /* Ensure this path is correct */
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding-top: 60px; /* Adjust for the navbar */
+            text-align: center; /* Center-align the text */
+            font-family: 'Roboto', sans-serif; /* Use Roboto font */
+            color: #333; /* Dark color for better contrast */
+        }
+
+        .container {
+            max-width: 400px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: red;
+            text-align: center;
+        }
+
+        label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        input[type="text"], input[type="password"], select {
+            width: 85%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Register</h1>
-    <form action="/register" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br>
-        <label for="user_type">I am a:</label>
-        <select id="user_type" name="user_type" required>
-            <option value="recruiter">Recruiter</option>
-            <option value="recruitee">Recruitee</option>
-        </select><br>
-        <button type="submit">Register</button>
-    </form>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>Register</h1>
+        <form method="post">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="user_type">User Type</label>
+            <select id="user_type" name="user_type" required>
+                <option value="recruiter">Recruiter</option>
+                <option value="recruitee">Recruitee</option>
+            </select>
+
+            <button type="submit">Register</button>
+        </form>
+    </div>
 </body>
 </html>
