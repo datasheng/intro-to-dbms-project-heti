@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Job Listing</title>
+</head>
+<body>
+    <h1>Create Job Listing</h1>
+    <form action="/job_profile" method="post">
+        <label for="job_title">Job Title:</label>
+        <input type="text" id="job_title" name="job_title" required><br>
+        
+        <label for="job_description">Job Description:</label><br>
+        <textarea id="job_description" name="job_description" required></textarea><br>
+        
+        <label for="compensation">Compensation:</label>
+        <input type="text" id="compensation" name="compensation" required><br>
+        
+        <label for="job_location">Job Location:</label>
+        <input type="text" id="job_location" name="job_location" required><br>
+        
+        <label for="job_post_time">Job Post Time:</label>
+        <input type="date" id="job_post_time" name="job_post_time" required><br>
+        
+        <label for="tags">Tags:</label><br>
+        {% for tag in tags %}
+            <input type="checkbox" id="tag{{ tag[0] }}" name="tags" value="{{ tag[0] }}">
+            <label for="tag{{ tag[0] }}">{{ tag[1] }}</label><br>
+        {% endfor %}
+        
+        <h2>Location</h2>
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country" required><br>
+        
+        <label for="postal_code">Postal Code:</label>
+        <input type="text" id="postal_code" name="postal_code" required><br>
+        
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br>
+        
+        <button type="submit">Create Job Listing</button>
+    </form>
+</body>
+</html>

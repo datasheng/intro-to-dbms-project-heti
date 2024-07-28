@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Matches</title>
+</head>
+<body>
+    <h1>Your Matches</h1>
+    {% if matches %}
+        <ul>
+            {% for match in matches %}
+                <li>{{ match[1] }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No matches found.</p>
+    {% endif %}
+    <a href="/swipe_recruiter">Go back to swipe</a>
+</body>
+</html>

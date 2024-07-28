@@ -1,3 +1,4 @@
+<!-- register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,12 +8,17 @@
 </head>
 <body>
     <h1>Register</h1>
-    <form action="/register" method="post">
-        <label for="username">Username:</label><br>
-        <input type="text" id="username" name="username"><br>
-        <label for="password">Password:</label><br>
-        <input type="password" id="password" name="password"><br><br>
-        <input type="submit" value="Register">
+    <form action="/register" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required><br>
+        <label for="user_type">I am a:</label>
+        <select id="user_type" name="user_type" required>
+            <option value="recruiter">Recruiter</option>
+            <option value="recruitee">Recruitee</option>
+        </select><br>
+        <button type="submit">Register</button>
     </form>
 </body>
 </html>

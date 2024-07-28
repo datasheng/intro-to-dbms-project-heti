@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swipe Profiles</title>
+    <title>Swipe Profiles - Recruiter</title>
     <script>
         function handleSwipe(action, userId) {
             const form = document.createElement('form');
@@ -23,22 +23,26 @@
             form.appendChild(userIdField);
 
             document.body.appendChild(form);
-            form.submit();
-        }
 
-        function handleSwipeResponse(response) {
-            if (response.match) {
-                alert('It\'s a match!');
-                window.location.href = '/matches';
-            } else {
-                location.reload();
-            }
+            fetch('/swipe_action', {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.match) {
+                    alert("It's a match!");
+                    window.location.href = '/matches';
+                } else {
+                    window.location.reload();
+                }
+            });
         }
     </script>
 </head>
 <body>
-    <h1>Swipe Profiles</h1>
-    <form action="/swipe" method="POST">
+    <h1>Swipe Profiles - Recruiter</h1>
+    <form action="/swipe_recruiter" method="POST">
         <h2>Select Filters</h2>
         {% for skill in skills %}
             <div>
