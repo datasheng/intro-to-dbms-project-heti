@@ -107,7 +107,7 @@ def get_remaining_swipes(user_id):
     cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [user_id])
     user_type = cur.fetchone()[0]
     if user_type in ['recruiter_premium', 'recruitee_premium']:
-        return 'infinite'  # Infinite swipes for premium users
+        return float('inf')  # Infinite swipes for premium users
 
     # For regular users, calculate remaining swipes
     today = date.today()
@@ -119,19 +119,13 @@ def get_remaining_swipes(user_id):
     else:
         return 10
 
-
 @app.route('/swipe_recruiter', methods=['GET', 'POST'])
 def swipe_recruiter():
     global current_user_id
     if current_user_id is None:
         return redirect(url_for('login'))
 
-    remaining_swipes = get_remaining_swipes(current_user_id)
-
     if request.method == 'POST':
-        if remaining_swipes <= 0:
-            return "You have no more swipes left for today. Upgrade to premium for unlimited swipes."
-
         selected_skills = request.form.getlist('skills')
         cur = mysql.connection.cursor()
 
@@ -162,10 +156,29 @@ def swipe_recruiter():
         skills = cur.fetchall()
         
         # Fetch one potential user to display
-        cur.execute("SELECT u.user_id, u.username FROM PotentialUsers p JOIN Users u ON p.user_id = u.user_id WHERE p.filterer_id = %s LIMIT 1", [current_user_id])
+        cur.execute("""
+        SELECT u.user_id, u.username, r.bio
+        FROM PotentialUsers p
+        JOIN Users u ON p.user_id = u.user_id
+        LEFT JOIN Recruitee r ON u.user_id = r.user_id
+        WHERE p.filterer_id = %s
+        LIMIT 1
+        """, [current_user_id])
         potential_user = cur.fetchone()
+        
+        user_skills = []
+        if potential_user:
+            cur.execute("SELECT s.skill_name FROM UserSkills us JOIN Skills s ON us.skill_id = s.skill_id WHERE us.user_id = %s", [potential_user[0]])
+            user_skills = [row[0] for row in cur.fetchall()]
+
+        # Calculate remaining swipes
+        remaining_swipes = get_remaining_swipes(current_user_id)
+
         cur.close()
-        return render_template('swipe_recruiter.html', skills=skills, user=potential_user, remaining_swipes=remaining_swipes)
+        return render_template('swipe_recruiter.html', skills=skills, user=potential_user, user_skills=user_skills, remaining_swipes=remaining_swipes)
+
+
+
 
 @app.route('/swipe_recruitee', methods=['GET', 'POST'])
 def swipe_recruitee():
@@ -228,7 +241,7 @@ def swipe_action():
         return jsonify({'error': 'Missing user_id or job_id'}), 400
 
     remaining_swipes = get_remaining_swipes(current_user_id)
-    if remaining_swipes <= 0:
+    if remaining_swipes != float('inf') and remaining_swipes <= 0:
         return jsonify({'error': 'No more swipes left for today. Upgrade to premium for unlimited swipes.'}), 400
 
     cur = mysql.connection.cursor()
@@ -264,10 +277,7 @@ def swipe_action():
             cur.execute("INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(%s, %s), GREATEST(%s, %s))", (current_user_id, swipee_id, current_user_id, swipee_id))
 
     # Delete from the PotentialUsers or PotentialJobs table
-    if request.form.get('user_id'):
-        cur.execute("DELETE FROM PotentialUsers WHERE user_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
-    elif request.form.get('job_id'):
-        cur.execute("DELETE FROM PotentialJobs WHERE job_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
+    cur.execute("DELETE FROM PotentialUsers WHERE user_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
 
     # Increment swipe count for regular users
     if user_type not in ['recruiter_premium', 'recruitee_premium']:

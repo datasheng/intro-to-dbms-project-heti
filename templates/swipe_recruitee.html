@@ -4,41 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swipe Jobs - Recruitee</title>
-    <script>
-        function handleSwipe(action, jobId) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/swipe_action';
-
-            const actionField = document.createElement('input');
-            actionField.type = 'hidden';
-            actionField.name = 'action';
-            actionField.value = action;
-            form.appendChild(actionField);
-
-            const jobIdField = document.createElement('input');
-            jobIdField.type = 'hidden';
-            jobIdField.name = 'job_id';
-            jobIdField.value = jobId;
-            form.appendChild(jobIdField);
-
-            document.body.appendChild(form);
-
-            fetch('/swipe_action', {
-                method: 'POST',
-                body: new FormData(form)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.match) {
-                    alert("It's a match!");
-                    window.location.href = '/matches';
-                } else {
-                    window.location.reload();
-                }
-            });
-        }
-    </script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Card.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/SwipeButton.css') }}">
 </head>
 <body>
     <h1>Swipe Jobs - Recruitee</h1>
@@ -59,13 +26,45 @@
         <button type="submit">Apply Filters</button>
     </form>
     {% if job %}
-        <h2>Potential Job</h2>
-        <p>Job Title: {{ job[1] }}</p>
-        <p>Job Description: {{ job[2] }}</p>
-        <button onclick="handleSwipe('like', {{ job[0] }})">Like</button>
-        <button onclick="handleSwipe('dislike', {{ job[0] }})">Dislike</button>
+        <div class="cardContainer">
+            <div class="card" style="background-image: url('https://via.placeholder.com/600x300');">
+                <h3>{{ job[1] }}</h3>
+                <p>{{ job[2] }}</p>
+            </div>
+        </div>
+        <div class="swipeButtons">
+            <button class="swipeButton_like" onclick="handleSwipe('like', {{ job[0] }})">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#4caf50"><path d="M0 0h24v24H0z" fill="none"/><path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z"/></svg>
+            </button>
+            <button class="swipeButton_dislike" onclick="handleSwipe('dislike', {{ job[0] }})">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#f44336"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13H5v-2h14v2z"/></svg>
+            </button>
+        </div>
     {% else %}
         <p>No more jobs to display.</p>
     {% endif %}
+    <script>
+        function handleSwipe(action, jobId) {
+            fetch('/swipe_action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    action: action,
+                    job_id: jobId,
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.match) {
+                    alert("It's a match!");
+                    window.location.href = '/matches';
+                } else {
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
