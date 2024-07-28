@@ -106,3 +106,28 @@ h1 {
 .swipeButton_dislike {
     color: #f44336; /* Red */
 }
+.cardContent {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    color: white; /* Text color */
+    padding: 10px; /* Padding */
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.card h3, .card p, .card ul {
+    margin: 5px 0;
+    color: white; /* Ensure text color is white */
+}
+
+.card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.card ul li {
+    margin-left: 10px; /* Indent list items */
+}

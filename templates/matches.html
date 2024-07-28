@@ -3,21 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matches</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Matches.css') }}">
+    <title>Matches - Linker</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url('{{ url_for('static', filename='images/background.png') }}');
+            background-size: cover;
+            background-position: center;
+            margin: 0;
+            padding-top: 60px; /* Adjust for the navbar */
+            font-family: 'Roboto', sans-serif;
+            color: white;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: black;
+        }
+
+        .match {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            color: black;
+        }
+
+        .match h3 {
+            margin: 0;
+        }
+
+        .match button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .match button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Your Matches</h1>
-    <ul>
+    {% include 'navbar.html' %}
+    <div class="container">
+        <h1>Your Matches</h1>
         {% for match in matches %}
-            <li>
-                {{ match[1] }}
-                <form action="{{ url_for('enter_chat') }}" method="POST" style="display:inline;">
+            <div class="match">
+                <h3>{{ match[1] }}</h3>
+                <form action="{{ url_for('chat') }}" method="GET">
                     <input type="hidden" name="match_id" value="{{ match[0] }}">
                     <button type="submit">Enter Chat</button>
                 </form>
-            </li>
+            </div>
         {% endfor %}
-    </ul>
+    </div>
 </body>
 </html>

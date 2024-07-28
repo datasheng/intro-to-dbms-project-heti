@@ -90,7 +90,7 @@
             box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
             margin: auto;
             border: 1px solid #ccc;
-            background-image: url('/static/images/default_user.png'); /* Ensure this path is correct */
+            background-image: url('/static/images/default.png'); /* Ensure this path is correct */
         }
 
         .card > h3, .card > p, .card > ul {
@@ -186,13 +186,18 @@
 
     <div class="swipeContainer">
         {% if job %}
-            <div class="cardContainer">
-                <div class="card">
+        <div class="cardContainer">
+            <div class="card" style="background-image: url('/static/profile_pics/{{ profile_image }}');">
+                <div class="cardContent">
                     <h3>{{ job[1] }}</h3>
-                    <p><strong>Job Description:</strong> {{ job[2] }}</p>
+                    <p><strong>Description:</strong> {{ job[2] }}</p>
                     <p><strong>Compensation:</strong> {{ job[3] }}</p>
                     <p><strong>Location:</strong> {{ job[4] }}</p>
                 </div>
+            </div>
+        </div>
+        
+        
             </div>
             <div class="swipeButtons">
                 <button class="swipeButton_dislike" onclick="handleSwipe('dislike', {{ job[0] }})">

@@ -90,11 +90,11 @@
             box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
             margin: auto;
             border: 1px solid #ccc;
-            background-image: url('/static/images/default_user.png'); /* Ensure this path is correct */
+            background-image: url('{{ profile_image }}'); 
         }
 
         .card > h3, .card > p, .card > ul {
-            color: black; /* Change text color to black */
+            color: black; 
             text-align: left;
             margin: 0;
             position: relative;
@@ -123,7 +123,7 @@
             background-color: white;
             border: none;
             box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
-            padding: 1rem;
+            padding: 1.2rem;
             border-radius: 50%;
             cursor: pointer;
             margin: 0 10px;
@@ -155,9 +155,8 @@
     {% include 'navbar.html' %}
     <h1>Swipe Profiles - Recruiter</h1>
     <div class="filters">
-        <h3>Filters</h3>
+        <h3>Select Filters</h3>
         <form action="/swipe_recruiter" method="POST">
-            <h2>Select Filters</h2>
             {% for skill in skills %}
                 <div>
                     <input type="checkbox" id="skill{{ skill[0] }}" name="skills" value="{{ skill[0] }}">
@@ -169,22 +168,20 @@
     </div>
     
     <div class="swipes-container">
-        <h3>Remaining Swipes</h3>
-        <p>{{ remaining_swipes }}</p>
+        <p>Remaining Swipes: {{ remaining_swipes }}</p>
         <form action="/upgrade_premium" method="POST">
             <button type="submit">Upgrade to Premium</button>
         </form>
     </div>
-
     <div class="links">
         <a href="{{ url_for('matches') }}">See Matches</a>
         <a href="{{ url_for('recruiter_profile') }}">Create New Job Posting</a>
     </div>
-
     <div class="swipeContainer">
         {% if user %}
-            <div class="cardContainer">
-                <div class="card">
+        <div class="cardContainer">
+            <div class="card" style="background-image: url('/static/profile_pics/{{ profile_image }}');">
+                <div class="cardContent">
                     <h3>{{ user[1] }}</h3>
                     <p><strong>Bio:</strong> {{ user[2] }}</p>
                     <ul>
@@ -195,20 +192,27 @@
                     </ul>
                 </div>
             </div>
+        </div>
+        
+        </div>
+        
+        
+            </div>
             <div class="swipeButtons">
-                <button class="swipeButton_dislike" onclick="handleSwipe('dislike', {{ user[0] }})">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#f44336">
-                        <path d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M19 13H5v-2h14v2z"/>
-                    </svg>
-                </button>
                 <button class="swipeButton_like" onclick="handleSwipe('like', {{ user[0] }})">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#4caf50">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 24 24" fill="#4caf50">
                         <path d="M0 0h24v24H0z" fill="none"/>
                         <path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z"/>
                     </svg>
                 </button>
+                <button class="swipeButton_dislike" onclick="handleSwipe('dislike', {{ user[0] }})">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48px" height="48px" viewBox="0 0 24 24" fill="#f44336">
+                        <path d="M0 0h24v24H0z" fill="none"/>
+                        <path d="M19 13H5v-2h14v2z"/>
+                    </svg>
+                </button>
             </div>
+            
         {% else %}
             <p>No more users to display.</p>
         {% endif %}
