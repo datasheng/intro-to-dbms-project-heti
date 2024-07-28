@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Matches</title>
+    <title>Matches</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Matches.css') }}">
 </head>
 <body>
     <h1>Your Matches</h1>
-    {% if matches %}
-        <ul>
-            {% for match in matches %}
-                <li>{{ match[1] }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No matches found.</p>
-    {% endif %}
-    <a href="/swipe_recruiter">Go back to swipe</a>
+    <ul>
+        {% for match in matches %}
+            <li>
+                {{ match[1] }}
+                <form action="{{ url_for('enter_chat') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="match_id" value="{{ match[0] }}">
+                    <button type="submit">Enter Chat</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
 </body>
 </html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/Chat.css') }}">
+</head>
+<body>
+    <h1>Chat with {{ chat_with_user_id }}</h1>
+    <div class="chat-container">
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message">
+                    <p><strong>{{ message[1] }}:</strong> {{ message[0] }}</p>
+                    <p><small>{{ message[2] }}</small></p>
+                </div>
+            {% endfor %}
+        </div>
+        <form action="{{ url_for('chat') }}" method="POST">
+            <textarea name="message_text" rows="3" cols="50" required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+</body>
+</html>

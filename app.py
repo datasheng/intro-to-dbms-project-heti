@@ -2,10 +2,13 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date
+from flask import session
+import datetime
 
 app = Flask(__name__)
 
-# MySQL configurations
+app.secret_key = 'HETI'
+
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'elly'
 app.config['MYSQL_PASSWORD'] = 'elly'
@@ -13,7 +16,6 @@ app.config['MYSQL_DB'] = 'linker'
 
 mysql = MySQL(app)
 
-# Global variable to hold the current user ID
 current_user_id = None
 
 @app.route('/')
@@ -186,12 +188,7 @@ def swipe_recruitee():
     if current_user_id is None:
         return redirect(url_for('login'))
 
-    remaining_swipes = get_remaining_swipes(current_user_id)
-
     if request.method == 'POST':
-        if remaining_swipes <= 0:
-            return "You have no more swipes left for today. Upgrade to premium for unlimited swipes."
-
         acceptable_cities = request.form.getlist('acceptable_cities')
         min_compensation = request.form['min_compensation']
         cur = mysql.connection.cursor()
@@ -223,26 +220,35 @@ def swipe_recruitee():
         locations = cur.fetchall()
         
         # Fetch one potential job to display
-        cur.execute("SELECT j.job_id, j.job_title, j.job_description FROM PotentialJobs p JOIN Jobs j ON p.job_id = j.job_id WHERE p.filterer_id = %s LIMIT 1", [current_user_id])
+        cur.execute("""
+        SELECT j.job_id, j.job_title, j.job_description, j.compensation, l.location_name
+        FROM PotentialJobs p
+        JOIN Jobs j ON p.job_id = j.job_id
+        JOIN Location l ON j.job_location = l.location_id
+        WHERE p.filterer_id = %s
+        LIMIT 1
+        """, [current_user_id])
         potential_job = cur.fetchone()
+
+        # Calculate remaining swipes
+        remaining_swipes = get_remaining_swipes(current_user_id)
+
         cur.close()
         return render_template('swipe_recruitee.html', locations=locations, job=potential_job, remaining_swipes=remaining_swipes)
+
+
 
 @app.route('/swipe_action', methods=['POST'])
 def swipe_action():
     global current_user_id
     if current_user_id is None:
         return redirect(url_for('login'))
-
+    
     action = request.form['action']
     swipee_id = request.form.get('user_id') or request.form.get('job_id')  # Handle both user and job IDs
-
+    
     if not swipee_id:
         return jsonify({'error': 'Missing user_id or job_id'}), 400
-
-    remaining_swipes = get_remaining_swipes(current_user_id)
-    if remaining_swipes != float('inf') and remaining_swipes <= 0:
-        return jsonify({'error': 'No more swipes left for today. Upgrade to premium for unlimited swipes.'}), 400
 
     cur = mysql.connection.cursor()
     match_found = False
@@ -251,49 +257,42 @@ def swipe_action():
     cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [current_user_id])
     user_type = cur.fetchone()[0]
 
-    if action == 'like':
-        if user_type in ['recruiter', 'recruiter_premium']:
-            # Recruiter is swiping on a recruitee
-            cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
+    # Check if the current user is swiping on a user (for recruiters) or a job (for recruitees)
+    if user_type in ['recruiter', 'recruiter_premium']:
+        # Recruiter is swiping on a recruitee
+        cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
+        
+        # Check for a mutual like (recruitee liked the recruiter back)
+        cur.execute("""
+        SELECT COUNT(*) FROM UserSwipes
+        WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
+        """, (swipee_id, current_user_id))
+    else:
+        # Recruitee is swiping on a job (recruiter)
+        cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
+        
+        # Check for a mutual like (recruiter liked the recruitee back)
+        cur.execute("""
+        SELECT COUNT(*) FROM UserSwipes
+        WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
+        """, (swipee_id, current_user_id))
 
-            # Check for a mutual like (recruitee liked the recruiter back)
-            cur.execute("""
-            SELECT COUNT(*) FROM UserSwipes
-            WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
-            """, (swipee_id, current_user_id))
-        else:
-            # Recruitee is swiping on a recruiter
-            cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
-
-            # Check for a mutual like (recruiter liked the recruitee back)
-            cur.execute("""
-            SELECT COUNT(*) FROM UserSwipes
-            WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
-            """, (swipee_id, current_user_id))
-
-        match_count = cur.fetchone()[0]
-        if match_count > 0:
-            match_found = True
-            cur.execute("INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(%s, %s), GREATEST(%s, %s))", (current_user_id, swipee_id, current_user_id, swipee_id))
+    match_count = cur.fetchone()[0]
+    if match_count > 0:
+        match_found = True
+        cur.execute("INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(%s, %s), GREATEST(%s, %s))", (current_user_id, swipee_id, current_user_id, swipee_id))
 
     # Delete from the PotentialUsers or PotentialJobs table
-    cur.execute("DELETE FROM PotentialUsers WHERE user_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
-
-    # Increment swipe count for regular users
-    if user_type not in ['recruiter_premium', 'recruitee_premium']:
-        today = date.today()
-        cur.execute("SELECT swipe_count FROM DailySwipes WHERE user_id = %s AND swipe_date = %s", (current_user_id, today))
-        result = cur.fetchone()
-        if result:
-            new_count = result[0] + 1
-            cur.execute("UPDATE DailySwipes SET swipe_count = %s WHERE user_id = %s AND swipe_date = %s", (new_count, current_user_id, today))
-        else:
-            cur.execute("INSERT INTO DailySwipes (user_id, swipe_date, swipe_count) VALUES (%s, %s, %s)", (current_user_id, today, 1))
-
+    if request.form.get('user_id'):
+        cur.execute("DELETE FROM PotentialUsers WHERE user_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
+    elif request.form.get('job_id'):
+        cur.execute("DELETE FROM PotentialJobs WHERE job_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
+        
     mysql.connection.commit()
     cur.close()
-
+    
     return jsonify({'match': match_found})
+
 
 @app.route('/match_popup')
 def match_popup():
@@ -336,6 +335,44 @@ def upgrade_premium():
     cur.close()
 
     return redirect(url_for('index'))
+@app.route('/enter_chat', methods=['POST'])
+def enter_chat():
+    global current_user_id
+    if current_user_id is None:
+        return redirect(url_for('login'))
 
+    match_id = request.form['match_id']
+    session['chat_with_user_id'] = match_id
+    return redirect(url_for('chat'))
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat():
+    global current_user_id
+    if current_user_id is None:
+        return redirect(url_for('login'))
+
+    chat_with_user_id = session.get('chat_with_user_id')
+    if chat_with_user_id is None:
+        return redirect(url_for('matches'))
+
+    cur = mysql.connection.cursor()
+    if request.method == 'POST':
+        message_text = request.form['message_text']
+        timestamp = datetime.datetime.now()
+        cur.execute("INSERT INTO Messages (sender_id, receiver_id, message_text, timestamp) VALUES (%s, %s, %s, %s)", 
+                    (current_user_id, chat_with_user_id, message_text, timestamp))
+        mysql.connection.commit()
+
+    cur.execute("""
+        SELECT m.message_text, u.username, m.timestamp
+        FROM Messages m
+        JOIN Users u ON m.sender_id = u.user_id
+        WHERE (m.sender_id = %s AND m.receiver_id = %s)
+        OR (m.sender_id = %s AND m.receiver_id = %s)
+        ORDER BY m.timestamp
+    """, (current_user_id, chat_with_user_id, chat_with_user_id, current_user_id))
+    messages = cur.fetchall()
+    cur.close()
+    return render_template('chat.html', messages=messages, chat_with_user_id=chat_with_user_id)
 if __name__ == '__main__':
     app.run(debug=True)
