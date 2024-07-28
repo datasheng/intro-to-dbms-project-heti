@@ -15,14 +15,14 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-image: url('{{ url_for('static', filename='images/background.png') }}'); /* Use Flask url_for to ensure correct path */
+            background-image: url('{{ url_for('static', filename='images/background.png') }}');
             background-size: cover;
             background-position: center;
             margin: 0;
-            padding-top: 60px; /* Adjust for the navbar */
-            text-align: center; /* Center-align the text */
-            font-family: 'Roboto', sans-serif; /* Use Roboto font */
-            color: #333; /* Dark color for better contrast */
+            padding-top: 60px;
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
         }
 
         .navbar {
@@ -63,13 +63,13 @@
             border: 3px solid #333;
             border-radius: 10px;
             display: inline-block;
-            color: red; /* Red color for the header */
+            color: red;
         }
 
         .content p {
             font-size: 24px;
             margin-bottom: 30px;
-            color: #666; /* Lighter color for better contrast against the background */
+            color: #666;
         }
 
         .swipeContainer {
@@ -91,7 +91,7 @@
         .card {
             position: relative;
             width: 300px;
-            height: 300px; /* Adjusted for better layout */
+            height: 300px;
             padding: 20px;
             border-radius: 20px;
             background-size: cover;
@@ -100,7 +100,7 @@
             box-shadow: 0px 10px 53px 0px rgba(0, 0, 0, 0.3);
             margin: auto;
             border: 1px solid #ccc;
-            background-image: url('{{ url_for('static', filename='images/logo.png') }}'); /* Use Flask url_for to ensure correct path */
+            background-image: url('{{ url_for('static', filename='images/logo.png') }}');
         }
 
         .swipeButtons {
