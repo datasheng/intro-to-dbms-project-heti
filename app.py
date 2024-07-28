@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_mysqldb import MySQL
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date
 
 app = Flask(__name__)
 
@@ -84,31 +85,40 @@ def recruitee_profile():
 
     if request.method == 'POST':
         bio = request.form['bio']
-        acceptable_cities = request.form.getlist('acceptable_cities')
-        min_compensation = request.form['min_compensation']
         selected_skills = request.form.getlist('skills')
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO Recruitee (user_id, bio) VALUES (%s, %s)", (current_user_id, bio))
-        
-        for city in acceptable_cities:
-            cur.execute("INSERT INTO RecruiteeCities (user_id, location_id) VALUES (%s, %s)", (current_user_id, city))
-        
-        cur.execute("INSERT INTO RecruiteePreferences (user_id, min_compensation) VALUES (%s, %s)", (current_user_id, min_compensation))
 
         for skill_id in selected_skills:
             cur.execute("INSERT INTO UserSkills (user_id, skill_id) VALUES (%s, %s)", (current_user_id, skill_id))
         
         mysql.connection.commit()
         cur.close()
-        return redirect(url_for('recruitee_profile'))
+        return redirect(url_for('swipe_recruitee'))
     else:
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM Location")
-        locations = cur.fetchall()
         cur.execute("SELECT * FROM Skills")
         skills = cur.fetchall()
         cur.close()
-        return render_template('recruitee_profile.html', locations=locations, skills=skills)
+        return render_template('recruitee_profile.html', skills=skills)
+
+def get_remaining_swipes(user_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [user_id])
+    user_type = cur.fetchone()[0]
+    if user_type in ['recruiter_premium', 'recruitee_premium']:
+        return 'infinite'  # Infinite swipes for premium users
+
+    # For regular users, calculate remaining swipes
+    today = date.today()
+    cur.execute("SELECT swipe_count FROM DailySwipes WHERE user_id = %s AND swipe_date = %s", (user_id, today))
+    result = cur.fetchone()
+    cur.close()
+    if result:
+        return 10 - result[0]
+    else:
+        return 10
+
 
 @app.route('/swipe_recruiter', methods=['GET', 'POST'])
 def swipe_recruiter():
@@ -116,7 +126,12 @@ def swipe_recruiter():
     if current_user_id is None:
         return redirect(url_for('login'))
 
+    remaining_swipes = get_remaining_swipes(current_user_id)
+
     if request.method == 'POST':
+        if remaining_swipes <= 0:
+            return "You have no more swipes left for today. Upgrade to premium for unlimited swipes."
+
         selected_skills = request.form.getlist('skills')
         cur = mysql.connection.cursor()
 
@@ -150,7 +165,7 @@ def swipe_recruiter():
         cur.execute("SELECT u.user_id, u.username FROM PotentialUsers p JOIN Users u ON p.user_id = u.user_id WHERE p.filterer_id = %s LIMIT 1", [current_user_id])
         potential_user = cur.fetchone()
         cur.close()
-        return render_template('swipe_recruiter.html', skills=skills, user=potential_user)
+        return render_template('swipe_recruiter.html', skills=skills, user=potential_user, remaining_swipes=remaining_swipes)
 
 @app.route('/swipe_recruitee', methods=['GET', 'POST'])
 def swipe_recruitee():
@@ -158,7 +173,12 @@ def swipe_recruitee():
     if current_user_id is None:
         return redirect(url_for('login'))
 
+    remaining_swipes = get_remaining_swipes(current_user_id)
+
     if request.method == 'POST':
+        if remaining_swipes <= 0:
+            return "You have no more swipes left for today. Upgrade to premium for unlimited swipes."
+
         acceptable_cities = request.form.getlist('acceptable_cities')
         min_compensation = request.form['min_compensation']
         cur = mysql.connection.cursor()
@@ -193,62 +213,77 @@ def swipe_recruitee():
         cur.execute("SELECT j.job_id, j.job_title, j.job_description FROM PotentialJobs p JOIN Jobs j ON p.job_id = j.job_id WHERE p.filterer_id = %s LIMIT 1", [current_user_id])
         potential_job = cur.fetchone()
         cur.close()
-        return render_template('swipe_recruitee.html', locations=locations, job=potential_job)
+        return render_template('swipe_recruitee.html', locations=locations, job=potential_job, remaining_swipes=remaining_swipes)
 
 @app.route('/swipe_action', methods=['POST'])
 def swipe_action():
     global current_user_id
     if current_user_id is None:
         return redirect(url_for('login'))
-    
+
     action = request.form['action']
     swipee_id = request.form.get('user_id') or request.form.get('job_id')  # Handle both user and job IDs
-    
+
     if not swipee_id:
         return jsonify({'error': 'Missing user_id or job_id'}), 400
+
+    remaining_swipes = get_remaining_swipes(current_user_id)
+    if remaining_swipes <= 0:
+        return jsonify({'error': 'No more swipes left for today. Upgrade to premium for unlimited swipes.'}), 400
 
     cur = mysql.connection.cursor()
     match_found = False
 
-    # Determine if the swiper is a recruiter or recruitee
+    # Determine if the current user is a recruiter or recruitee
     cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [current_user_id])
     user_type = cur.fetchone()[0]
 
-    if user_type in ['recruiter', 'recruiter_premium']:
-        # Recruiter is swiping on a recruitee
-        cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
-    else:
-        # Recruitee is swiping on a job (recruiter)
-        cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (swipee_id, current_user_id))
+    if action == 'like':
+        if user_type in ['recruiter', 'recruiter_premium']:
+            # Recruiter is swiping on a recruitee
+            cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
 
-    # Check for a mutual like
-    if user_type in ['recruiter', 'recruiter_premium']:
-        cur.execute("""
-        SELECT COUNT(*) FROM UserSwipes
-        WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
-        """, (swipee_id, current_user_id))
-    else:
-        cur.execute("""
-        SELECT COUNT(*) FROM UserSwipes
-        WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
-        """, (current_user_id, swipee_id))
+            # Check for a mutual like (recruitee liked the recruiter back)
+            cur.execute("""
+            SELECT COUNT(*) FROM UserSwipes
+            WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
+            """, (swipee_id, current_user_id))
+        else:
+            # Recruitee is swiping on a recruiter
+            cur.execute("INSERT INTO UserSwipes (swiper_id, swipee_id, swipe_type) VALUES (%s, %s, 'like')", (current_user_id, swipee_id))
 
-    match_count = cur.fetchone()[0]
-    if match_count > 0:
-        match_found = True
-        cur.execute("INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(%s, %s), GREATEST(%s, %s))", (current_user_id, swipee_id, current_user_id, swipee_id))
+            # Check for a mutual like (recruiter liked the recruitee back)
+            cur.execute("""
+            SELECT COUNT(*) FROM UserSwipes
+            WHERE swiper_id = %s AND swipee_id = %s AND swipe_type = 'like'
+            """, (swipee_id, current_user_id))
+
+        match_count = cur.fetchone()[0]
+        if match_count > 0:
+            match_found = True
+            cur.execute("INSERT INTO Matches (user1_id, user2_id) VALUES (LEAST(%s, %s), GREATEST(%s, %s))", (current_user_id, swipee_id, current_user_id, swipee_id))
 
     # Delete from the PotentialUsers or PotentialJobs table
     if request.form.get('user_id'):
         cur.execute("DELETE FROM PotentialUsers WHERE user_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
     elif request.form.get('job_id'):
         cur.execute("DELETE FROM PotentialJobs WHERE job_id = %s AND filterer_id = %s", [swipee_id, current_user_id])
-        
+
+    # Increment swipe count for regular users
+    if user_type not in ['recruiter_premium', 'recruitee_premium']:
+        today = date.today()
+        cur.execute("SELECT swipe_count FROM DailySwipes WHERE user_id = %s AND swipe_date = %s", (current_user_id, today))
+        result = cur.fetchone()
+        if result:
+            new_count = result[0] + 1
+            cur.execute("UPDATE DailySwipes SET swipe_count = %s WHERE user_id = %s AND swipe_date = %s", (new_count, current_user_id, today))
+        else:
+            cur.execute("INSERT INTO DailySwipes (user_id, swipe_date, swipe_count) VALUES (%s, %s, %s)", (current_user_id, today, 1))
+
     mysql.connection.commit()
     cur.close()
-    
-    return jsonify({'match': match_found})
 
+    return jsonify({'match': match_found})
 
 @app.route('/match_popup')
 def match_popup():
@@ -270,6 +305,27 @@ def matches():
     matches = cur.fetchall()
     cur.close()
     return render_template('matches.html', matches=matches)
+@app.route('/upgrade_premium', methods=['POST'])
+def upgrade_premium():
+    global current_user_id
+    if current_user_id is None:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+    # Update the user_type to premium
+    cur.execute("SELECT user_type FROM Users WHERE user_id = %s", [current_user_id])
+    current_user_type = cur.fetchone()[0]
+
+    if 'recruiter' in current_user_type:
+        new_user_type = 'recruiter_premium'
+    else:
+        new_user_type = 'recruitee_premium'
+    
+    cur.execute("UPDATE Users SET user_type = %s WHERE user_id = %s", (new_user_type, current_user_id))
+    mysql.connection.commit()
+    cur.close()
+
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

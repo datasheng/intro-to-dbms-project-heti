@@ -10,25 +10,13 @@
     <form action="/recruitee_profile" method="POST">
         <label for="bio">Bio:</label>
         <textarea id="bio" name="bio" required></textarea><br>
-        
-        <label for="acceptable_cities">Acceptable Cities:</label>
-        <select id="acceptable_cities" name="acceptable_cities" multiple required>
-            {% for location in locations %}
-                <option value="{{ location[0] }}">{{ location[1] }}</option>
-            {% endfor %}
-        </select><br>
-
-        <label for="min_compensation">Minimum Compensation:</label>
-        <input type="number" id="min_compensation" name="min_compensation" required><br>
-        
-        <label for="skills">Skills:</label>
-        <div>
-            {% for skill in skills %}
+        <h2>Select Skills</h2>
+        {% for skill in skills %}
+            <div>
                 <input type="checkbox" id="skill{{ skill[0] }}" name="skills" value="{{ skill[0] }}">
                 <label for="skill{{ skill[0] }}">{{ skill[1] }}</label>
-            {% endfor %}
-        </div><br>
-
+            </div>
+        {% endfor %}
         <button type="submit">Save Profile</button>
     </form>
 </body>

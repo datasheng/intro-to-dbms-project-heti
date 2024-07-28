@@ -42,6 +42,10 @@
 </head>
 <body>
     <h1>Swipe Profiles - Recruiter</h1>
+    <p>Remaining Swipes: {{ remaining_swipes }}</p>
+    <form action="/upgrade_premium" method="POST">
+        <button type="submit">Upgrade to Premium</button>
+    </form>
     <form action="/swipe_recruiter" method="POST">
         <h2>Select Filters</h2>
         {% for skill in skills %}
