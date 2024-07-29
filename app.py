@@ -244,10 +244,11 @@ def swipe_recruiter():
         INSERT INTO PotentialUsers (user_id, filterer_id)
         SELECT DISTINCT u.user_id, %s
         FROM Users u
-        JOIN UserSkills us ON u.user_id = us.user_id
-        WHERE us.skill_id IN ({placeholders})
+        JOIN RecruiteeSkills rs ON u.user_id = rs.recruitee_id
+        WHERE rs.skill_id IN ({placeholders})
         AND u.user_id != %s
         """
+
         cur.execute(insert_query, [current_user_id] + selected_skills + [current_user_id])
 
         mysql.connection.commit()
