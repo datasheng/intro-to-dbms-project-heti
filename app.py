@@ -97,12 +97,27 @@ def recruitee_profile():
         bio = request.form['bio']
         selected_skills = request.form.getlist('skills')
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO Recruitee (user_id, bio) VALUES (%s, %s) ON DUPLICATE KEY UPDATE bio = VALUES(bio)", (current_user_id, bio))
+        
+        # Ensure the Recruitee record exists and fetch the recruitee_id
+        cur.execute("SELECT recruitee_id FROM Recruitee WHERE user_id = %s", [current_user_id])
+        result = cur.fetchone()
+        
+        if result:
+            recruitee_id = result[0]
+        else:
+            cur.execute("INSERT INTO Recruitee (user_id, bio) VALUES (%s, %s)", (current_user_id, bio))
+            mysql.connection.commit()
+            cur.execute("SELECT recruitee_id FROM Recruitee WHERE user_id = %s", [current_user_id])
+            recruitee_id = cur.fetchone()[0]
 
-        cur.execute("DELETE FROM UserSkills WHERE user_id = %s", [current_user_id])
+        # Update the bio
+        cur.execute("UPDATE Recruitee SET bio = %s WHERE recruitee_id = %s", (bio, recruitee_id))
+
+        # Delete existing skills to avoid duplicates
+        cur.execute("DELETE FROM RecruiteeSkills WHERE recruitee_id = %s", [recruitee_id])
 
         for skill_id in selected_skills:
-            cur.execute("INSERT INTO UserSkills (user_id, skill_id) VALUES (%s, %s)", (current_user_id, skill_id))
+            cur.execute("INSERT INTO RecruiteeSkills (recruitee_id, skill_id) VALUES (%s, %s)", (recruitee_id, skill_id))
         
         mysql.connection.commit()
         cur.close()
@@ -113,13 +128,20 @@ def recruitee_profile():
         bio_result = cur.fetchone()
         bio = bio_result[0] if bio_result else ''
 
-        cur.execute("SELECT skill_id FROM UserSkills WHERE user_id = %s", [current_user_id])
+        # Fetch the recruitee_id and skills
+        cur.execute("SELECT recruitee_id FROM Recruitee WHERE user_id = %s", [current_user_id])
+        recruitee_id = cur.fetchone()[0]
+        
+        cur.execute("SELECT skill_id FROM RecruiteeSkills WHERE recruitee_id = %s", [recruitee_id])
         user_skills = [row[0] for row in cur.fetchall()]
 
-        cur.execute("SELECT * FROM Skills")
+        # Adjust the skills query to include a checked flag
+        cur.execute("SELECT s.skill_id, s.skill_name, IF(rs.skill_id IS NOT NULL, 1, 0) AS checked FROM Skills s LEFT JOIN RecruiteeSkills rs ON s.skill_id = rs.skill_id AND rs.recruitee_id = %s", [recruitee_id])
         skills = cur.fetchall()
         cur.close()
         return render_template('recruitee_profile.html', bio=bio, skills=skills, user_skills=user_skills)
+
+
 
 def get_remaining_swipes(user_id):
     cur = mysql.connection.cursor()
