@@ -6,6 +6,9 @@
     {% else %}
         <a href="{{ url_for('recruitee_profile') }}">Edit Profile</a>
     {% endif %}
+    {% if is_premium %}
+        <a href="{{ url_for('see_likes') }}">See Likes</a>
+    {% endif %}
     {% if user_type == 'admin' %}
         <a href="{{ url_for('admin') }}">Admin</a>
     {% endif %}
@@ -20,7 +23,6 @@
         <a href="{{ url_for('logout') }}" class="navbar-right">Logout</a>
     </div>
 </div>
-
 
 <style>
     .navbar {

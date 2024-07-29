@@ -401,6 +401,33 @@ def admin():
     total_revenue = premium_user_count * sub_cost
     cur.close()
     return render_template('admin.html', premium_user_count=premium_user_count, total_revenue=total_revenue, sub_cost=sub_cost)
+@app.route('/see_likes')
+def see_likes():
+    global current_user_id
+    if current_user_id is None:
+        return redirect(url_for('login'))
+
+    cur = mysql.connection.cursor()
+    cur.execute("""
+    SELECT u.user_id, u.username, r.bio
+    FROM UserSwipes us
+    JOIN Users u ON us.swiper_id = u.user_id
+    LEFT JOIN Recruitee r ON u.user_id = r.user_id
+    WHERE us.swipee_id = %s AND us.swipe_type = 'like'
+    """, [current_user_id])
+    liked_users = cur.fetchall()
+
+    user_skills = {}
+    for user in liked_users:
+        cur.execute("SELECT s.skill_name FROM RecruiteeSkills rs JOIN Skills s ON rs.skill_id = s.skill_id WHERE rs.recruitee_id = %s", [user[0]])
+        user_skills[user[0]] = [row[0] for row in cur.fetchall()]
+
+    cur.close()
+    
+    profile_images = [f"profile{i}.png" for i in range(1, len(os.listdir('static/profile_pics')) + 1)]
+    profile_images.sort()
+
+    return render_template('see_likes.html', liked_users=liked_users, user_skills=user_skills, profile_images=profile_images)
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
